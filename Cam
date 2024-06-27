@@ -37,7 +37,7 @@ getgenv().games = {
         autopred = true,
         AntiGroundShots = true,
         Resolver = true,
-        Key = Enum.KeyCode.Q,
+        Key = "Q"
     },
 }
 
