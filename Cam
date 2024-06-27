@@ -1,0 +1,139 @@
+getgenv().games = {
+    Camlock = {
+        Enable = true,
+        prediction = 0.116869348534243,
+        smoothness = 0.9,
+        autopred = true,
+        AntiGroundShots = true,
+        Resolver = true,
+        Key = Enum.KeyCode.Q,
+    },
+}
+
+local Players = game:GetService("Players")
+local RS = game:GetService("RunService")
+local WS = game:GetService("Workspace")
+local GS = game:GetService("GuiService")
+local UIS = game:GetService("UserInputService")
+local Stats = game:GetService("Stats")
+
+local LP = Players.LocalPlayer
+local Mouse = LP:GetMouse()
+local Camera = WS.CurrentCamera
+local AimlockTarget = nil
+local MousePressed = false
+
+local function GetNearestTargetFromClick()
+    local clickPosition = Mouse.Hit.p
+    local nearestPlayer = nil
+    local shortestDistance = math.huge
+    
+    for _, v in pairs(Players:GetPlayers()) do
+        if v ~= LP and v.Character and v.Character:FindFirstChild("HumanoidRootPart") then
+            local distance = (v.Character.HumanoidRootPart.Position - clickPosition).Magnitude
+            if distance < shortestDistance then
+                nearestPlayer = v
+                shortestDistance = distance
+            end
+        end
+    end
+    
+    return nearestPlayer
+end
+
+local function updatePrediction()
+    if getgenv().games.Camlock.autopred then
+        local ping = tonumber(Stats.Network.ServerStatsItem["Data Ping"]:GetValueString():split(".")[1])
+        if ping < 30 then
+            getgenv().games.Camlock.prediction = 0.11252476
+        elseif ping < 50 then
+            getgenv().games.Camlock.prediction = 0.13544
+        elseif ping < 65 then
+            getgenv().games.Camlock.prediction = 0.1264236
+        elseif ping < 70 then
+            getgenv().games.Camlock.prediction = 0.12533
+        elseif ping < 80 then
+            getgenv().games.Camlock.prediction = 0.13934
+        elseif ping < 100 then
+            getgenv().games.Camlock.prediction = 0.141987
+        end
+    end
+end
+
+RS.RenderStepped:Connect(function()
+    updatePrediction()
+    
+    if AimlockTarget and AimlockTarget.Character and AimlockTarget.Character:FindFirstChild("HumanoidRootPart") then
+        local Character = AimlockTarget.Character
+        local Humanoid = Character:FindFirstChildOfClass("Humanoid")
+        
+        local KOd = Character:FindFirstChild("BodyEffects") and Character.BodyEffects:FindFirstChild("K.O") and Character.BodyEffects["K.O"].Value
+        local Grabbed = Character:FindFirstChild("GRABBING_CONSTRAINT") ~= nil
+
+        if KOd or Grabbed then
+            AimlockTarget = nil
+            MousePressed = false
+        else
+            local aimPart = AimlockTarget.Character.HumanoidRootPart
+            if getgenv().games.Camlock.AntiGroundShots then
+                if Humanoid.FloorMaterial == Enum.Material.Air then
+                    aimPart = AimlockTarget.Character.UpperTorso
+                end
+            end
+
+if Camlock.Resolver == true and Plr.Character ~= nil and enabled and Camlock.Enable then
+    while true do
+        heartbeat:Wait()
+        if target == true then
+            local character = game.Players[targetplr].Character.HumanoidRootPart
+            local lastPosition = character.Position
+            task.wait()
+            local currentPosition = character.Position
+            local velocity = (currentPosition - lastPosition) * 0
+            character.AssemblyLinearVelocity = velocity
+            character.Velocity = velocity
+        end
+    end
+end
+
+            local aimPosition = aimPart.Position + (aimPart.Velocity * getgenv().games.Camlock.prediction)
+            local smoothAim = CFrame.new(Camera.CFrame.Position, aimPosition)
+            
+            Camera.CFrame = Camera.CFrame:Lerp(smoothAim, getgenv().games.Camlock.smoothness)
+        end
+    end
+end)
+
+UIS.InputBegan:Connect(function(input, gameProcessed)
+    if not gameProcessed and input.KeyCode == getgenv().games.Camlock.Key then
+        if AimlockTarget == nil then
+            pcall(function()
+                if not MousePressed then MousePressed = true end 
+                local Target = GetNearestTargetFromClick()
+                if Target then 
+                    AimlockTarget = Target
+                end
+            end)
+        elseif AimlockTarget then
+            AimlockTarget = nil
+            if MousePressed then MousePressed = false end
+        end
+    end
+end)
+
+LP.CharacterAdded:Connect(function()
+    AimlockTarget = nil
+    MousePressed = false
+end)
+
+	local mt = getrawmetatable(game)
+	local old = mt.__namecall
+	setreadonly(mt, false)
+	mt.__namecall = newcclosure(function(...)
+		local args = {...}
+		if enabled and getnamecallmethod() == "FireServer" and args[2] == "UpdateMousePos" then
+			args[3] = Plr.Character.LowerTorso.Position+(Plr.Character.LowerTorso.Velocity*accomidationfactor)
+			return old(unpack(args))
+		end
+		return old(...)
+	end)
